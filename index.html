@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>FORGE — Forgia il tuo corpo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:           #07070f;
+      --surface:      #0d0d1a;
+      --card:         #131320;
+      --card2:        #191928;
+      --border:       #252540;
+      --accent:       #ff6525;
+      --accent2:      #ffaa00;
+      --accent-glow:  rgba(255,101,37,0.22);
+      --gold:         #ffd700;
+      --gold-dim:     #b8860b;
+      --gold-glow:    rgba(255,215,0,0.25);
+      --text:         #f0f0fa;
+      --text-2:       #9090b8;
+      --muted:        #4a4a6e;
+      --success:      #22c55e;
+      --radius:       16px;
+      --radius-sm:    10px;
+      --font-d:       'Bebas Neue', sans-serif;
+      --font-b:       'Outfit', sans-serif;
+      --safe-bottom:  env(safe-area-inset-bottom, 0px);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box; margin: 0; padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-b);
+      height: 100%; overflow: hidden;
+      overscroll-behavior: none;
+    }
+
+    #root {
+      width: 100%; height: 100dvh;
+      max-width: 430px;
+      margin: 0 auto;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── SCROLLABLE AREA ── */
+    .scroll {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+    }
+    ::-webkit-scrollbar { display: none; }
+
+    /* ── TYPOGRAPHY ── */
+    .title-xl { font-family: var(--font-d); font-size: 52px; letter-spacing: 4px; line-height: 1; }
+    .title-lg { font-family: var(--font-d); font-size: 36px; letter-spacing: 3px; }
+    .title-md { font-family: var(--font-d); font-size: 24px; letter-spacing: 2px; }
+    .title-sm { font-family: var(--font-d); font-size: 18px; letter-spacing: 2px; }
+    .label-caps { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-2); }
+
+    /* ── SPLASH ── */
+    .splash {
+      position: fixed; inset: 0; z-index: 999;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: var(--bg);
+      gap: 6px;
+    }
+    .splash-logo {
+      font-family: var(--font-d);
+      font-size: 88px; letter-spacing: 14px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      animation: breathe 2s ease-in-out infinite;
+    }
+    .splash-sub {
+      font-size: 12px; letter-spacing: 5px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 52px;
+    }
+    @keyframes breathe { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+
+    /* ── FORGE SPINNER ── */
+    .spinner-wrap { position: relative; }
+    .spinner-ring {
+      animation: spin 1.3s linear infinite;
+      transform-origin: center;
+    }
+    .spinner-arc {
+      stroke-dasharray: 130 40;
+      animation: arc-dash 1.3s ease-in-out infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes arc-dash {
+      0%   { stroke-dashoffset: 0; }
+      50%  { stroke-dashoffset: -100; }
+      100% { stroke-dashoffset: -170; }
+    }
+
+    /* ── ONBOARDING ── */
+    .onb-wrap { display: flex; flex-direction: column; height: 100dvh; }
+    .onb-top { padding: 52px 24px 20px; }
+    .onb-prog { display: flex; gap: 5px; margin-bottom: 30px; }
+    .onb-bar {
+      flex: 1; height: 3px; border-radius: 2px;
+      background: var(--border); transition: background .3s;
+    }
+    .onb-bar.done  { background: var(--accent2); }
+    .onb-bar.active { background: var(--accent); }
+    .onb-body { flex: 1; padding: 4px 24px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .onb-foot { padding: 12px 24px calc(20px + var(--safe-bottom)); }
+
+    /* ── FORM ── */
+    .field { margin-bottom: 18px; }
+    .field label { display: block; margin-bottom: 7px; }
+    .field-row { display: flex; gap: 10px; }
+    .field-row .field { flex: 1; }
+    input.fi, select.fi {
+      width: 100%; background: var(--card); border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); padding: 13px 14px;
+      color: var(--text); font-family: var(--font-b); font-size: 16px; font-weight: 500;
+      outline: none; transition: border-color .2s;
+      -webkit-appearance: none; appearance: none;
+    }
+    input.fi:focus, select.fi:focus { border-color: var(--accent); }
+    input.fi::placeholder { color: var(--muted); }
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    input[type=time].fi { color-scheme: dark; }
+
+    /* chips */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      padding: 9px 16px; border-radius: 50px;
+      background: var(--card); border: 1.5px solid var(--border);
+      color: var(--text-2); font-family: var(--font-b);
+      font-size: 13px; font-weight: 500; cursor: pointer; transition: all .18s;
+    }
+    .chip.on { background: rgba(255,101,37,.14); border-color: var(--accent); color: var(--accent); }
+
+    .day-chip {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--card); border: 1.5px solid var(--border);
+      color: var(--text-2); font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all .18s; flex-shrink: 0;
+    }
+    .day-chip.on { background: rgba(255,101,37,.14); border-color: var(--accent); color: var(--accent); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      width: 100%; border: none; border-radius: var(--radius-sm);
+      font-family: var(--font-d); font-size: 22px; letter-spacing: 2px;
+      cursor: pointer; padding: 15px; transition: transform .13s, opacity .13s;
+    }
+    .btn:active { transform: scale(.96); }
+    .btn-fire { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+    .btn-gold { background: linear-gradient(135deg, var(--gold-dim), var(--gold)); color: #1a0a00;
+      box-shadow: 0 4px 20px var(--gold-glow); }
+    .btn-ghost { background: transparent; border: 1.5px solid var(--border);
+      color: var(--text-2); font-size: 15px; font-weight: 600; font-family: var(--font-b); }
+    .btn:disabled { opacity: .38; pointer-events: none; }
+
+    /* ── BOTTOM NAV ── */
+    .nav {
+      background: var(--surface); border-top: 1px solid var(--border);
+      display: flex; flex-shrink: 0;
+      padding: 6px 0 calc(6px + var(--safe-bottom));
+    }
+    .nav-tab {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 3px; padding: 8px 0;
+      cursor: pointer; transition: all .18s;
+    }
+    .nav-icon { font-size: 20px; transition: filter .2s; }
+    .nav-lbl { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); transition: color .2s; }
+    .nav-tab.on .nav-lbl { color: var(--accent); }
+    .nav-tab.on .nav-icon { filter: drop-shadow(0 0 5px var(--accent)); }
+
+    /* ── HOME ── */
+    .home-hero {
+      background: linear-gradient(180deg, rgba(255,101,37,.06) 0%, transparent 70%);
+      padding: 52px 24px 0;
+    }
+    .greeting { color: var(--text-2); font-size: 13px; letter-spacing: 1px; }
+    .hero-name { font-family: var(--font-d); font-size: 40px; letter-spacing: 3px; margin-top: 2px; }
+
+    .char-stage {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 8px 0 4px; position: relative;
+    }
+    .char-shadow {
+      position: absolute; bottom: 4px;
+      width: 90px; height: 20px; border-radius: 50%;
+      background: rgba(0,0,0,.5); filter: blur(10px);
+    }
+    .char-glow {
+      position: absolute; bottom: 10px;
+      width: 110px; height: 30px; border-radius: 50%;
+      filter: blur(22px); transition: background .8s;
+    }
+    .char-float { animation: float 3.2s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+
+    .rank-pill {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 50px; padding: 7px 18px; margin-top: 10px;
+      transition: border-color .5s;
+    }
+    .rank-pill-icon { font-size: 16px; }
+    .rank-pill-name { font-family: var(--font-d); font-size: 19px; letter-spacing: 2px; transition: color .5s; }
+
+    .xp-wrap { padding: 10px 24px 0; }
+    .xp-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .xp-fill { height: 100%; border-radius: 3px; transition: width .9s cubic-bezier(.34,1.56,.64,1); }
+    .xp-row { display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; color: var(--muted); }
+
+    .stats-row { display: flex; gap: 10px; padding: 14px 24px 0; }
+    .stat-card {
+      flex: 1; background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 8px; text-align: center;
+    }
+    .stat-val { font-family: var(--font-d); font-size: 26px; letter-spacing: 1px; }
+    .stat-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+    .section { padding: 18px 24px 0; }
+    .sec-hd { font-family: var(--font-d); font-size: 20px; letter-spacing: 2px; margin-bottom: 10px; }
+
+    .today-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px;
+    }
+    .today-type {
+      font-size: 11px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 10px;
+    }
+    .ex-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .ex-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--card2); border-radius: 50px;
+      padding: 5px 11px; font-size: 12px; color: var(--text-2);
+    }
+    .ex-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+    .records-row { display: flex; gap: 10px; }
+    .rec-card {
+      flex: 1; background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 10px;
+    }
+    .rec-icon { font-size: 14px; margin-bottom: 4px; }
+    .rec-val { font-family: var(--font-d); font-size: 22px; color: var(--accent); }
+    .rec-lbl { font-size: 10px; color: var(--muted); }
+
+    .ad-wrap { margin: 12px 24px 0; }
+    .ad-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 14px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .ad-badge { font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-bottom: 2px; }
+    .ad-text { font-size: 13px; color: var(--text-2); }
+
+    /* ── PLAN ── */
+    .plan-wrap { padding: 52px 24px 16px; }
+    .day-block {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 12px; overflow: hidden;
+      animation: fadeUp .35s ease;
+    }
+    .day-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px; border-bottom: 1px solid var(--border);
+    }
+    .day-name { font-family: var(--font-d); font-size: 20px; letter-spacing: 2px; }
+    .day-tag { font-size: 10px; color: var(--accent); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+    .ex-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 16px; border-bottom: 1px solid rgba(37,37,64,.6);
+    }
+    .ex-row:last-child { border-bottom: none; }
+    .ex-name { font-size: 15px; font-weight: 500; }
+    .ex-note { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+    .ex-sets { font-family: var(--font-d); font-size: 17px; color: var(--accent); letter-spacing: 1px; }
+
+    /* ── AI ── */
+    .ai-wrap { padding: 52px 24px 16px; }
+    .ai-hero { text-align: center; padding: 20px 0 24px; }
+    .ai-emoji { font-size: 52px; margin-bottom: 10px; }
+    .ai-t { font-family: var(--font-d); font-size: 38px; letter-spacing: 4px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .lock-box {
+      background: linear-gradient(135deg, rgba(255,215,0,.08), rgba(255,101,37,.08));
+      border: 1px solid rgba(255,215,0,.25); border-radius: var(--radius);
+      padding: 24px 20px; text-align: center; margin-bottom: 16px;
+    }
+    .lock-icon { font-size: 44px; margin-bottom: 12px; }
+    .lock-t { font-family: var(--font-d); font-size: 28px; letter-spacing: 2px; color: var(--gold); margin-bottom: 8px; }
+    .lock-s { color: var(--text-2); font-size: 14px; margin-bottom: 18px; line-height: 1.5; }
+    .ai-load {
+      display: flex; flex-direction: column; align-items: center; padding: 36px; gap: 16px;
+    }
+    .ai-load-t { font-family: var(--font-d); font-size: 16px; letter-spacing: 3px; color: var(--accent); }
+    .ai-err { color: #ef4444; font-size: 13px; margin-bottom: 12px; padding: 10px 14px; background: rgba(239,68,68,.1); border-radius: 8px; }
+    .ai-success { background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; text-align: center; }
+
+    /* ── PROFILE ── */
+    .prof-wrap { padding: 52px 24px 16px; }
+    .prof-avatar {
+      display: flex; flex-direction: column; align-items: center; padding: 12px 0 24px;
+    }
+    .avatar-ring {
+      width: 78px; height: 78px; border-radius: 50%;
+      background: var(--card); border: 2px solid var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-d); font-size: 36px; letter-spacing: 1px;
+      box-shadow: 0 0 22px var(--accent-glow); transition: border-color .4s, box-shadow .4s;
+    }
+    .avatar-ring.gold { border-color: var(--gold); box-shadow: 0 0 22px var(--gold-glow); }
+    .prof-name { font-family: var(--font-d); font-size: 28px; letter-spacing: 2px; margin-top: 12px; }
+    .prof-email { color: var(--muted); font-size: 13px; margin-top: 3px; }
+    .premium-badge { font-family: var(--font-d); font-size: 13px; letter-spacing: 3px; color: var(--gold); margin-top: 5px; }
+
+    .prem-banner {
+      background: linear-gradient(135deg, #1a1100, #251900);
+      border: 1px solid rgba(255,215,0,.35); border-radius: var(--radius);
+      padding: 16px; display: flex; align-items: center; gap: 14px; margin-bottom: 18px;
+    }
+    .prem-icon { font-size: 30px; }
+    .prem-title { font-family: var(--font-d); font-size: 19px; letter-spacing: 2px; color: var(--gold); }
+    .prem-sub { font-size: 12px; color: var(--text-2); margin-top: 1px; }
+    .prem-btn {
+      margin-left: auto; background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+      border: none; border-radius: 8px; padding: 8px 14px;
+      font-family: var(--font-d); font-size: 14px; letter-spacing: 1px;
+      color: #1a0a00; cursor: pointer;
+    }
+
+    .sett-section { margin-bottom: 20px; }
+    .sett-head { margin-bottom: 8px; }
+    .sett-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .sett-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px; border-bottom: 1px solid var(--border);
+    }
+    .sett-row:last-child { border-bottom: none; }
+    .sett-lbl { font-size: 15px; font-weight: 500; }
+    .sett-val { color: var(--muted); font-size: 14px; }
+
+    /* toggle */
+    .tog {
+      width: 46px; height: 25px; background: var(--border);
+      border-radius: 13px; position: relative; cursor: pointer; transition: background .25s;
+    }
+    .tog.on { background: var(--accent); }
+    .tog-dot {
+      position: absolute; top: 2.5px; left: 2.5px;
+      width: 20px; height: 20px; border-radius: 50%; background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,.4); transition: transform .25s;
+    }
+    .tog.on .tog-dot { transform: translateX(21px); }
+
+    .days-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ── RANK UNLOCK ── */
+    .unlock-overlay {
+      position: fixed; inset: 0; z-index: 900;
+      background: rgba(0,0,0,.88); backdrop-filter: blur(14px);
+      display: flex; align-items: center; justify-content: center;
+      animation: fadeIn .3s ease;
+    }
+    .unlock-card {
+      background: var(--card); border: 1px solid var(--gold);
+      border-radius: 24px; padding: 44px 32px; text-align: center;
+      box-shadow: 0 0 60px var(--gold-glow);
+      animation: popIn .4s cubic-bezier(.34,1.56,.64,1);
+      max-width: 320px; width: 90%;
+    }
+    .unlock-big { font-size: 72px; margin-bottom: 14px; display: block; animation: wobble 1s ease; }
+    .unlock-sup { font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+    .unlock-name { font-family: var(--font-d); font-size: 46px; letter-spacing: 4px; }
+    .unlock-sub { color: var(--text-2); font-size: 14px; margin: 12px 0 24px; }
+
+    /* XP pop */
+    .xp-pop {
+      position: fixed; top: 58px; right: 22px; z-index: 800;
+      background: var(--card); border: 1px solid var(--accent);
+      border-radius: 50px; padding: 7px 14px;
+      font-family: var(--font-d); font-size: 17px; letter-spacing: 1px; color: var(--accent);
+      animation: xpFly 2.2s ease forwards; pointer-events: none;
+    }
+    @keyframes xpFly {
+      0%  { opacity:0; transform: translateY(10px); }
+      15% { opacity:1; transform: translateY(0); }
+      80% { opacity:1; }
+      100%{ opacity:0; transform: translateY(-28px); }
+    }
+
+    /* ── MISC ANIMATIONS ── */
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes popIn  { from{transform:scale(.7);opacity:0} to{transform:scale(1);opacity:1} }
+    @keyframes wobble {
+      0%{transform:rotate(0)} 20%{transform:rotate(-12deg)} 40%{transform:rotate(12deg)}
+      60%{transform:rotate(-8deg)} 80%{transform:rotate(6deg)} 100%{transform:rotate(0)}
+    }
+    @keyframes glowPulse {
+      0%,100%{ opacity:.25 } 50%{ opacity:.55 }
+    }
+
+    .fade-in { animation: fadeIn .35s ease; }
+    .fade-up { animation: fadeUp .35s ease; }
+
+    /* empty state */
+    .empty { display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding: 60px 24px; gap: 12px; text-align: center; }
+    .empty-icon { font-size: 48px; }
+
+    /* Loader overlay */
+    .loader-ov {
+      position: fixed; inset: 0; z-index: 700;
+      background: rgba(7,7,15,.92); backdrop-filter: blur(10px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+/* ─── CONSTANTS ─── */
+
+const AI_MODEL = 'claude-sonnet-4-5'; // cambia qui se vuoi un modello diverso
+
+const RANKS = [
+  { name:'Rookie',       icon:'🥊', color:'#6b6b8e', xp:0 },
+  { name:'Novice',       icon:'💪', color:'#7b8aaa', xp:120 },
+  { name:'Contender',    icon:'⚡', color:'#3b82f6', xp:280 },
+  { name:'Apprentice',   icon:'🔥', color:'#60a5fa', xp:520 },
+  { name:'Challenger',   icon:'⚔️',  color:'#8b5cf6', xp:900 },
+  { name:'Warrior',      icon:'🛡️', color:'#a78bfa', xp:1500 },
+  { name:'Fighter',      icon:'🥋', color:'#c084fc', xp:2300 },
+  { name:'Gladiator',    icon:'⚔️',  color:'#f59e0b', xp:3400 },
+  { name:'Spartan',      icon:'🏛️', color:'#fbbf24', xp:4800 },
+  { name:'Viking',       icon:'🪓', color:'#fcd34d', xp:6600 },
+  { name:'Beast',        icon:'🦁', color:'#ef4444', xp:8900 },
+  { name:'Titan',        icon:'🌋', color:'#f87171', xp:11700 },
+  { name:'Juggernaut',   icon:'💥', color:'#dc2626', xp:15200 },
+  { name:'Colossus',     icon:'🗿', color:'#b91c1c', xp:19500 },
+  { name:'Warlord',      icon:'👑', color:'#991b1b', xp:24700 },
+  { name:'Champion',     icon:'🏆', color:'#f97316', xp:31000 },
+  { name:'Legend',       icon:'⭐', color:'#fb923c', xp:38500 },
+  { name:'Mythic',       icon:'🌟', color:'#eab308', xp:47500 },
+  { name:'Immortal',     icon:'♾️', color:'#facc15', xp:58000 },
+  { name:'Demigod',      icon:'⚡', color:'#fde047', xp:70500 },
+  { name:'Olympian',     icon:'🏛️', color:'#a855f7', xp:85000 },
+  { name:'Transcendent', icon:'✨', color:'#c084fc', xp:102000 },
+  { name:'Ascendant',    icon:'🚀', color:'#d8b4fe', xp:122000 },
+  { name:'Divine',       icon:'👼', color:'#67e8f9', xp:145000 },
+  { name:'Apex',         icon:'🔱', color:'#22d3ee', xp:172000 },
+  { name:'Supreme',      icon:'💎', color:'#06b6d4', xp:203000 },
+  { name:'Ethereal',     icon:'🌌', color:'#f472b6', xp:239000 },
+  { name:'Cosmic',       icon:'🌠', color:'#ec4899', xp:280000 },
+  { name:'Celestial',    icon:'🌙', color:'#e879f9', xp:327000 },
+  { name:'GODLIKE',      icon:'⚡', color:'#ffd700', xp:380000 },
+];
+
+const DAYS_SHORT = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+const DAYS_FULL  = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+
+const ADS = [
+  '💊 Integrators Pro — Usa FORGE20 per il 20% di sconto',
+  '🥤 ProteinWorld — Offerta del mese: whey premium',
+  '👟 Nike Training — Nuova collezione disponibile',
+  '🧴 Myprotein — Bundle starter pack in offerta',
+];
+
+const DEFAULT_PLAN = {
+  'Lunedì':    { type:'PETTO & TRICIPITI', exercises:[
+    {name:'Panca Piana',          sets:4, reps:'8-10'},
+    {name:'Panca Inclinata',      sets:3, reps:'10-12'},
+    {name:'Croci ai Cavi',        sets:3, reps:'12-15'},
+    {name:'Dips',                 sets:3, reps:'a cedimento'},
+    {name:'Tricipiti ai Cavi',    sets:3, reps:'12'},
+    {name:'Skull Crusher',        sets:3, reps:'10'},
+  ]},
+  'Mercoledì': { type:'SCHIENA & BICIPITI', exercises:[
+    {name:'Trazioni / Lat Machine',sets:4, reps:'8-10'},
+    {name:'Rematore con Bilanciere',sets:4, reps:'8-10'},
+    {name:'Pulley Basso',         sets:3, reps:'12'},
+    {name:'Face Pull',            sets:3, reps:'15'},
+    {name:'Curl con Bilanciere',  sets:3, reps:'10'},
+    {name:'Curl a Martello',      sets:3, reps:'12'},
+  ]},
+  'Venerdì':   { type:'GAMBE & SPALLE', exercises:[
+    {name:'Squat',                sets:5, reps:'5-8'},
+    {name:'Leg Press',            sets:4, reps:'12-15'},
+    {name:'Affondi',              sets:3, reps:'10 per lato'},
+    {name:'Leg Curl',             sets:3, reps:'12'},
+    {name:'Military Press',       sets:4, reps:'8-10'},
+    {name:'Alzate Laterali',      sets:3, reps:'15'},
+  ]},
+};
+
+/* ─── UTILS ─── */
+const ls = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set: (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+const getRankIdx = xp => {
+  let i = 0;
+  for (let r = RANKS.length - 1; r >= 0; r--) { if (xp >= RANKS[r].xp) { i = r; break; } }
+  return i;
+};
+const getCharTier   = ri => Math.min(5, Math.floor(ri / 5));
+const getXPProgress = (xp, ri) => {
+  if (ri >= RANKS.length - 1) return 1;
+  return (xp - RANKS[ri].xp) / (RANKS[ri+1].xp - RANKS[ri].xp);
+};
+const xpToNext = (xp, ri) => ri >= RANKS.length - 1 ? 0 : RANKS[ri+1].xp - xp;
+
+/* ─── FORGE SPINNER ─── */
+const Spinner = ({ size = 56 }) => (
+  <div className="spinner-wrap" style={{ width:size, height:size }}>
+    <svg width={size} height={size} viewBox="0 0 56 56">
+      <defs>
+        <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ff6525"/>
+          <stop offset="100%" stopColor="#ffaa00"/>
+        </linearGradient>
+      </defs>
+      <circle cx="28" cy="28" r="23" fill="none" stroke="var(--border)" strokeWidth="3"/>
+      <circle cx="28" cy="28" r="23" fill="none" stroke="url(#sg)" strokeWidth="3"
+        strokeLinecap="round" className="spinner-ring spinner-arc"
+        style={{ transformOrigin:'28px 28px' }}/>
+      <text x="28" y="34" textAnchor="middle" fontSize="13"
+        fontFamily="Bebas Neue" fill="url(#sg)" letterSpacing="1">F</text>
+    </svg>
+  </div>
+);
+
+/* ─── CHARACTER SVG (6 tiers) ─── */
+const Character = ({ tier, color }) => {
+  const T = Math.min(5, Math.max(0, tier));
+  // shoulder half-width, torso bottom half, arm w, leg w, head r, arm len, leg len
+  const cfg = [
+    [22, 13,  7,  8, 13, 44, 42],  // 0 Rookie
+    [27, 15,  9, 10, 14, 46, 44],  // 1 Fighter
+    [33, 17, 11, 13, 15, 48, 46],  // 2 Beast
+    [39, 19, 14, 16, 16, 50, 48],  // 3 Champion
+    [45, 21, 17, 19, 17, 52, 50],  // 4 Olympian
+    [51, 23, 20, 22, 18, 54, 52],  // 5 Godlike
+  ][T];
+  const [sw, tb, aw, lw, hr, al, ll] = cfg;
+  const cx = 70, neckY = hr * 2 + 8;
+  const shoulderY = neckY + 9;
+  const torsoBot   = shoulderY + 42 + T*3;
+  const armX_L = cx - sw - aw + 3;
+  const armX_R = cx + sw - 3;
+  const glowStr = T >= 3 ? `drop-shadow(0 0 ${T*5}px ${color}99)` : 'none';
+  const gid = `cg${T}`;
+
+  return (
+    <svg width="140" height="195" viewBox="0 0 140 195"
+      style={{ filter: glowStr }}
+      className="char-float">
+      <defs>
+        <linearGradient id={gid} x1="0%" y1="0%" x2="60%" y2="100%">
+          <stop offset="0%" stopColor={color}/>
+          <stop offset="100%" stopColor={color + 'bb'}/>
+        </linearGradient>
+      </defs>
+
+      {/* Godlike ring auras */}
+      {T >= 5 && [1,2,3].map(i=>(
+        <ellipse key={i} cx={cx} cy={188} rx={28+i*14} ry={4+i*2}
+          fill="none" stroke={color} strokeWidth="1"
+          style={{ opacity: 0.3/i, animation:`glowPulse ${1.4+i*.3}s ease-in-out infinite` }}/>
+      ))}
+
+      {/* Shadow */}
+      <ellipse cx={cx} cy={192} rx={lw*1.8+10} ry={5} fill="rgba(0,0,0,.45)"/>
+
+      {/* Legs */}
+      {[[-lw-1, 0],[1, 0]].map(([ox], si)=>(
+        <g key={si}>
+          <rect x={cx+ox} y={torsoBot} width={lw} height={ll} rx={lw/2}
+            fill={`url(#${gid})`}/>
+          <ellipse cx={cx+ox+lw/2} cy={torsoBot+ll+1} rx={lw*0.85} ry={3.5} fill={color}/>
+        </g>
+      ))}
+
+      {/* Arms */}
+      <rect x={armX_L} y={shoulderY+2} width={aw} height={al} rx={aw/2}
+        fill={`url(#${gid})`}
+        transform={`rotate(-7,${armX_L+aw/2},${shoulderY+2})`}/>
+      <rect x={armX_R} y={shoulderY+2} width={aw} height={al} rx={aw/2}
+        fill={`url(#${gid})`}
+        transform={`rotate(7,${armX_R+aw/2},${shoulderY+2})`}/>
+
+      {/* Torso */}
+      <path d={`M${cx-sw},${shoulderY} L${cx+sw},${shoulderY}
+                L${cx+tb},${torsoBot} L${cx-tb},${torsoBot} Z`}
+        fill={`url(#${gid})`}/>
+
+      {/* Chest line T>=2 */}
+      {T >= 2 && (
+        <path d={`M${cx-sw*.55},${shoulderY+10} Q${cx},${shoulderY+20} ${cx+sw*.55},${shoulderY+10}`}
+          fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="2"/>
+      )}
+
+      {/* Neck */}
+      <rect x={cx-5} y={neckY-1} width={10} height={11} rx={4} fill={`url(#${gid})`}/>
+
+      {/* Head */}
+      <circle cx={cx} cy={hr+4} r={hr} fill={`url(#${gid})`}/>
+
+      {/* Eyes */}
+      <circle cx={cx-5} cy={hr+3} r={2.2} fill="rgba(0,0,0,.7)"/>
+      <circle cx={cx+5} cy={hr+3} r={2.2} fill="rgba(0,0,0,.7)"/>
+      {T >= 3 && <>
+        <circle cx={cx-4.2} cy={hr+2.2} r={.9} fill={color}/>
+        <circle cx={cx+5.8} cy={hr+2.2} r={.9} fill={color}/>
+      </>}
+
+      {/* Crown spikes T>=4 */}
+      {T >= 4 && [-16,-8,0,8,16].map((ox,i)=>(
+        <line key={i} x1={cx+ox} y1={4+hr-hr} x2={cx+ox} y2={i===2?-8:-4}
+          stroke={color} strokeWidth={i===2?2.2:1.5} strokeLinecap="round"
+          style={{ opacity:.75 }}/>
+      ))}
+
+      {/* Godlike flames */}
+      {T >= 5 && [-24,-12,0,12,24].map((ox,i)=>(
+        <path key={i}
+          d={`M${cx+ox},${-2} Q${cx+ox-4},${-14} ${cx+ox},${-24} Q${cx+ox+4},${-14} ${cx+ox},${-2}`}
+          fill={i%2===0?'#ff6525':'#ffd700'} opacity=".75"
+          style={{ animation:`float ${1.2+i*.18}s ease-in-out infinite` }}/>
+      ))}
+    </svg>
+  );
+};
+
+/* ─── SPLASH ─── */
+const Splash = () => (
+  <div className="splash">
+    <div className="splash-logo">FORGE</div>
+    <div className="splash-sub">Forgia il tuo corpo</div>
+    <Spinner size={60}/>
+  </div>
+);
+
+/* ─── ONBOARDING ─── */
+const Onboarding = ({ onDone }) => {
+  const [step, setStep] = useState(0);
+  const TOTAL = 5;
+  const [f, sf] = useState({
+    name:'', age:'', sex:'',
+    weight:'', height:'',
+    goal:'',
+    experience:'', days:3,
+    bench:'', squat:'', deadlift:'',
+    email:'', premium:false, apiKey:'',
+  });
+  const u = (k,v) => sf(p=>({...p,[k]:v}));
+
+  const ok = [
+    f.name.trim() && f.age && f.sex,
+    f.weight && f.height,
+    !!f.goal,
+    f.experience && f.days,
+    true,
+  ][step];
+
+  const next = () => step < TOTAL-1 ? setStep(s=>s+1) : onDone(f);
+
+  const stepContent = [
+    /* 0 */ <>
+      <div className="field">
+        <label className="label-caps">Il tuo nome</label>
+        <input className="fi" placeholder="Es. Marco" value={f.name} onChange={e=>u('name',e.target.value)}/>
+      </div>
+      <div className="field-row">
+        <div className="field">
+          <label className="label-caps">Età</label>
+          <input className="fi" type="number" placeholder="25" value={f.age} onChange={e=>u('age',e.target.value)}/>
+        </div>
+        <div className="field">
+          <label className="label-caps">Sesso</label>
+          <div className="chips" style={{marginTop:2}}>
+            {['♂ Uomo','♀ Donna'].map(s=>(
+              <div key={s} className={`chip${f.sex===s?' on':''}`} onClick={()=>u('sex',s)}>{s}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>,
+    /* 1 */ <>
+      <div className="field-row">
+        <div className="field">
+          <label className="label-caps">Peso (kg)</label>
+          <input className="fi" type="number" placeholder="75" value={f.weight} onChange={e=>u('weight',e.target.value)}/>
+        </div>
+        <div className="field">
+          <label className="label-caps">Altezza (cm)</label>
+          <input className="fi" type="number" placeholder="175" value={f.height} onChange={e=>u('height',e.target.value)}/>
+        </div>
+      </div>
+    </>,
+    /* 2 */ <>
+      <div className="chips">
+        {[
+          {l:'💪 Massa muscolare', v:'massa'},
+          {l:'🔥 Perdita peso',     v:'dimagrimento'},
+          {l:'⚡ Definizione',      v:'definizione'},
+          {l:'🏋️ Forza pura',      v:'forza'},
+          {l:'🏃 Resistenza',       v:'resistenza'},
+          {l:'🏆 Performance',      v:'performance'},
+        ].map(g=>(
+          <div key={g.v} className={`chip${f.goal===g.v?' on':''}`} onClick={()=>u('goal',g.v)}>{g.l}</div>
+        ))}
+      </div>
+    </>,
+    /* 3 */ <>
+      <div className="field" style={{marginBottom:22}}>
+        <label className="label-caps" style={{marginBottom:8,display:'block'}}>Esperienza</label>
+        <div className="chips">
+          {[
+            {l:'🌱 Principiante',  v:'principiante', s:'< 1 anno'},
+            {l:'🔥 Intermedio',    v:'intermedio',    s:'1–3 anni'},
+            {l:'💎 Avanzato',      v:'avanzato',      s:'3–5 anni'},
+            {l:'⚡ Elite',          v:'elite',          s:'5+ anni'},
+          ].map(e=>(
+            <div key={e.v} className={`chip${f.experience===e.v?' on':''}`} onClick={()=>u('experience',e.v)}>
+              {e.l}<span style={{display:'block',fontSize:10,opacity:.6,marginTop:2}}>{e.s}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="field">
+        <label className="label-caps" style={{marginBottom:10,display:'block'}}>Giorni a settimana</label>
+        <div style={{display:'flex',gap:8}}>
+          {[2,3,4,5,6,7].map(d=>(
+            <div key={d} className={`day-chip${f.days===d?' on':''}`} onClick={()=>u('days',d)}>{d}</div>
+          ))}
+        </div>
+      </div>
+    </>,
+    /* 4 */ <>
+      <div className="field">
+        <label className="label-caps">Email (per sync)</label>
+        <input className="fi" type="email" placeholder="tua@email.com" value={f.email} onChange={e=>u('email',e.target.value)}/>
+      </div>
+      <div style={{display:'flex',gap:8,marginBottom:20}}>
+        {[
+          {l:'🏋️ Panca',  k:'bench'},
+          {l:'🦵 Squat',  k:'squat'},
+          {l:'⬆️ Stacco', k:'deadlift'},
+        ].map(r=>(
+          <div key={r.k} className="field" style={{flex:1}}>
+            <label className="label-caps" style={{fontSize:9}}>{r.l} kg</label>
+            <input className="fi" type="number" placeholder="—" value={f[r.k]} onChange={e=>u(r.k,e.target.value)}/>
+          </div>
+        ))}
+      </div>
+      <div style={{background:'linear-gradient(135deg,#1a1100,#251800)',border:'1px solid rgba(255,215,0,.28)',borderRadius:14,padding:16}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+          <div>
+            <div style={{fontFamily:'Bebas Neue',fontSize:19,letterSpacing:2,color:'#ffd700'}}>💎 PREMIUM</div>
+            <div style={{fontSize:12,color:'var(--text-2)',marginTop:2}}>Piano AI · No pubblicità · Sync cloud</div>
+          </div>
+          <div className={`tog${f.premium?' on':''}`} onClick={()=>u('premium',!f.premium)}>
+            <div className="tog-dot"/>
+          </div>
+        </div>
+        {f.premium && (
+          <div className="field" style={{marginBottom:0}}>
+            <label className="label-caps">Chiave API Anthropic</label>
+            <input className="fi" type="password" placeholder="sk-ant-..." value={f.apiKey} onChange={e=>u('apiKey',e.target.value)}/>
+            <div style={{fontSize:11,color:'var(--muted)',marginTop:6}}>Serve per la generazione AI del piano. Resta sul tuo dispositivo.</div>
+          </div>
+        )}
+      </div>
+    </>,
+  ];
+
+  const titles = ['CHI SEI?','IL TUO CORPO','IL TUO OBIETTIVO','LA TUA ESPERIENZA','ULTIMI DETTAGLI'];
+  const subs   = [
+    'Iniziamo dalle basi',
+    'Dati per calcolare BMI e piano ottimale',
+    'Cosa vuoi raggiungere?',
+    'Da quanto ti alleni?',
+    'Record personali e accesso — opzionale',
+  ];
+
+  return (
+    <div className="onb-wrap">
+      <div className="onb-top">
+        <div className="onb-prog">
+          {Array.from({length:TOTAL}).map((_,i)=>(
+            <div key={i} className={`onb-bar${i<step?' done':i===step?' active':''}`}/>
+          ))}
+        </div>
+        <div className="title-xl" style={{marginBottom:6}}>{titles[step]}</div>
+        <div style={{color:'var(--text-2)',fontSize:14}}>{subs[step]}</div>
+      </div>
+
+      <div className="onb-body">{stepContent[step]}</div>
+
+      <div className="onb-foot">
+        <button className="btn btn-fire" onClick={next} disabled={!ok} style={{marginBottom:10}}>
+          {step < TOTAL-1 ? 'AVANTI' : 'INIZIA A FORGIARE'}
+        </button>
+        {step > 0 && <button className="btn btn-ghost" onClick={()=>setStep(s=>s-1)}>INDIETRO</button>}
+      </div>
+    </div>
+  );
+};
+
+/* ─── HOME ─── */
+const Home = ({ profile, progress, plan, isPremium, onAddXP }) => {
+  const ri    = getRankIndex(progress.xp);
+  const rank  = RANKS[ri];
+  const tier  = getCharTier(ri);
+  const prog  = getXPProgress(progress.xp, ri);
+  const nxt   = xpToNext(progress.xp, ri);
+  const bmi   = (profile.weight / ((profile.height/100)**2)).toFixed(1);
+  const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+  const todayName = DAYS_FULL[todayIdx];
+  const todayPlan = plan && plan[todayName];
+  const adIdx = useRef(Math.floor(Math.random()*ADS.length)).current;
+
+  return (
+    <div className="scroll" style={{paddingBottom:16}}>
+      <div className="home-hero">
+        <div className="greeting">BENTORNATO,</div>
+        <div className="hero-name">{profile.name.toUpperCase()}</div>
+      </div>
+
+      <div className="char-stage">
+        <div className="char-glow" style={{background:`${rank.color}55`}}/>
+        <Character tier={tier} color={rank.color}/>
+        <div className="rank-pill" style={{borderColor:`${rank.color}55`}}>
+          <span className="rank-pill-icon">{rank.icon}</span>
+          <span className="rank-pill-name" style={{color:rank.color}}>{rank.name.toUpperCase()}</span>
+        </div>
+        <div className="char-shadow"/>
+      </div>
+
+      <div className="xp-wrap">
+        <div className="xp-track">
+          <div className="xp-fill" style={{width:`${prog*100}%`,background:`linear-gradient(90deg,${rank.color},${rank.color}aa)`}}/>
+        </div>
+        <div className="xp-row">
+          <span>{progress.xp.toLocaleString()} XP</span>
+          {ri < RANKS.length-1 && <span>ancora {nxt.toLocaleString()} → {RANKS[ri+1].name}</span>}
+        </div>
+      </div>
+
+      <div className="stats-row">
+        {[
+          {v:progress.streak||0,    l:'🔥 Serie'},
+          {v:progress.workouts||0,  l:'💪 Sessioni'},
+          {v:bmi,                   l:'📊 BMI'},
+        ].map(s=>(
+          <div key={s.l} className="stat-card">
+            <div className="stat-val" style={{color:rank.color,fontSize:s.v>999?20:26}}>{s.v}</div>
+            <div className="stat-lbl">{s.l}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="section">
+        <div className="sec-hd">OGGI — {todayName.toUpperCase()}</div>
+        {todayPlan ? (
+          <div className="today-card">
+            <div className="today-type">{todayPlan.type}</div>
+            <div className="ex-pills">
+              {todayPlan.exercises.slice(0,5).map((e,i)=>(
+                <span key={i} className="ex-pill"><span className="ex-dot"/>  {e.name}</span>
+              ))}
+              {todayPlan.exercises.length > 5 && (
+                <span className="ex-pill" style={{color:'var(--muted)'}}>+{todayPlan.exercises.length-5} altri</span>
+              )}
+            </div>
+            <button className="btn btn-fire" style={{fontSize:16}} onClick={()=>onAddXP(50)}>
+              ✅ COMPLETATO (+50 XP)
+            </button>
+          </div>
+        ) : (
+          <div className="today-card" style={{textAlign:'center',padding:28}}>
+            <div style={{fontSize:36,marginBottom:8}}>😴</div>
+            <div style={{color:'var(--text-2)',fontSize:15}}>Oggi è giorno di riposo.</div>
+            <div style={{color:'var(--muted)',fontSize:13,marginTop:4}}>Recupera e torna più forte!</div>
+          </div>
+        )}
+      </div>
+
+      {!isPremium && (
+        <div className="ad-wrap">
+          <div className="ad-card">
+            <div>
+              <div className="ad-badge">Sponsorizzato</div>
+              <div className="ad-text">{ADS[adIdx]}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="section" style={{marginBottom:8}}>
+        <div className="sec-hd">I MIEI RECORD</div>
+        <div className="records-row">
+          {[
+            {icon:'🏋️',val:profile.bench||'—',lbl:'Panca'},
+            {icon:'🦵',val:profile.squat||'—',lbl:'Squat'},
+            {icon:'⬆️',val:profile.deadlift||'—',lbl:'Stacco'},
+          ].map(r=>(
+            <div key={r.lbl} className="rec-card">
+              <div className="rec-icon">{r.icon}</div>
+              <div className="rec-val" style={{color:rank.color}}>{r.val}{r.val!=='—'&&<span style={{fontSize:12}}> kg</span>}</div>
+              <div className="rec-lbl">{r.lbl}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─── PLAN ─── */
+const Plan = ({ plan }) => {
+  if (!plan || !Object.keys(plan).length) return (
+    <div className="empty fade-in">
+      <div className="empty-icon">📋</div>
+      <div className="title-md">NESSUN PIANO</div>
+      <div style={{color:'var(--text-2)',fontSize:14,lineHeight:1.6}}>
+        Vai alla tab AI per generare il tuo piano personalizzato con l'intelligenza artificiale.
+      </div>
+    </div>
+  );
+  return (
+    <div className="plan-wrap scroll">
+      <div className="title-lg" style={{marginBottom:4}}>IL TUO PIANO</div>
+      <div style={{color:'var(--text-2)',fontSize:13,marginBottom:18}}>Scheda settimanale — tocca un esercizio per i dettagli</div>
+      {Object.entries(plan).map(([day,d])=>(
+        <div key={day} className="day-block">
+          <div className="day-hd">
+            <div className="day-name">{day.toUpperCase()}</div>
+            <div className="day-tag">{d.type}</div>
+          </div>
+          {(d.exercises||[]).map((e,i)=>(
+            <div key={i} className="ex-row">
+              <div>
+                <div className="ex-name">{e.name}</div>
+                <div className="ex-note">{e.note||`${e.reps} ripetizioni`}</div>
+              </div>
+              <div className="ex-sets">{e.sets}×{e.reps}</div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/* ─── AI ─── */
+const AIScreen = ({ profile, isPremium, apiKey, onPlanReady, onTabChange }) => {
+  const [loading, setLoading] = useState(false);
+  const [err, setErr]         = useState('');
+  const [done, setDone]       = useState(false);
+  const [note, setNote]       = useState('');
+  const [key, setKey]         = useState(apiKey||'');
+
+  const generate = async () => {
+    const k = key || apiKey;
+    if (!k) { setErr('Inserisci la tua chiave API Anthropic (sk-ant-...).'); return; }
+    setLoading(true); setErr(''); setDone(false);
+
+    const sys = `Sei un personal trainer esperto italiano. Rispondi SOLO con un oggetto JSON valido (nessun markdown, nessun testo aggiuntivo, nessun backtick). Struttura:
+{"Lunedì":{"type":"NOME MUSCOLI","exercises":[{"name":"Nome","sets":4,"reps":"8-12","note":""}]},...}
+Usa giorni in italiano. Includi SOLO i giorni di allenamento, non i giorni di riposo.`;
+
+    const msg = `Crea un piano settimanale per:
+Nome: ${profile.name}
+Obiettivo: ${profile.goal}
+Livello: ${profile.experience}
+Giorni/settimana: ${profile.days}
+Peso: ${profile.weight}kg, Altezza: ${profile.height}cm
+Sesso: ${profile.sex}
+Record — Panca: ${profile.bench||'N/D'}kg, Squat: ${profile.squat||'N/D'}kg, Stacco: ${profile.deadlift||'N/D'}kg
+${note?`Note aggiuntive: ${note}`:''}
+Dividi in esattamente ${profile.days} giorni di allenamento con progressione adeguata al livello.`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'x-api-key': k,
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true',
+        },
+        body: JSON.stringify({ model: AI_MODEL, max_tokens:2500, system:sys, messages:[{role:'user',content:msg}] }),
+      });
+      const data = await res.json();
+      if (data.error) { setErr(data.error.message); setLoading(false); return; }
+      const raw = data.content[0].text.trim().replace(/```json|```/g,'').trim();
+      const plan = JSON.parse(raw);
+      onPlanReady(plan);
+      setDone(true);
+    } catch(e) {
+      setErr('Errore: verifica la chiave API e riprova. Dettaglio: '+e.message);
+    }
+    setLoading(false);
+  };
+
+  if (!isPremium) return (
+    <div className="ai-wrap scroll">
+      <div className="ai-hero">
+        <div className="ai-emoji">🤖</div>
+        <div className="ai-t">PIANO AI</div>
+        <div style={{color:'var(--text-2)',fontSize:14,marginTop:6}}>Il piano perfetto costruito su di te</div>
+      </div>
+      <div className="lock-box">
+        <div className="lock-icon">🔒</div>
+        <div className="lock-t">FUNZIONE PREMIUM</div>
+        <div className="lock-s">
+          Sblocca la generazione AI per un piano 100% personalizzato su obiettivi, record e livello. Zero pubblicità. Sync cloud.
+        </div>
+        <button className="btn btn-gold" onClick={()=>onTabChange('profile')}>💎 ATTIVA PREMIUM</button>
+      </div>
+      <div style={{marginTop:20}}>
+        <div className="title-sm" style={{marginBottom:8}}>PIANO BASE (GRATUITO)</div>
+        <div style={{color:'var(--text-2)',fontSize:14,lineHeight:1.6}}>
+          Hai accesso a un piano standard di 3 giorni settimanali. Vai su "Piano" per vederlo. Passa a Premium per ricevere un programma fatto su misura.
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="ai-wrap scroll">
+      <div className="ai-hero">
+        <div className="ai-emoji">🤖</div>
+        <div className="ai-t">PIANO AI</div>
+        <div style={{color:'var(--text-2)',fontSize:14,marginTop:6}}>Generazione personalizzata basata sul tuo profilo</div>
+      </div>
+
+      {!apiKey && (
+        <div className="field" style={{marginBottom:14}}>
+          <label className="label-caps">Chiave API Anthropic</label>
+          <input className="fi" type="password" placeholder="sk-ant-..." value={key} onChange={e=>setKey(e.target.value)}/>
+        </div>
+      )}
+
+      <div className="field" style={{marginBottom:14}}>
+        <label className="label-caps">Note extra (opzionale)</label>
+        <input className="fi" placeholder="Es. infortunio spalla, preferisco no macchine..." value={note} onChange={e=>setNote(e.target.value)}/>
+      </div>
+
+      {err && <div className="ai-err">{err}</div>}
+
+      {done && !loading && (
+        <div className="ai-success">
+          <div style={{fontSize:28,marginBottom:6}}>🎉</div>
+          <div style={{fontFamily:'Bebas Neue',fontSize:20,letterSpacing:2,color:'var(--success)'}}>PIANO GENERATO!</div>
+          <div style={{color:'var(--text-2)',fontSize:13,marginTop:4}}>Vai su "Piano" per vederlo.</div>
+        </div>
+      )}
+
+      <button className="btn btn-gold" onClick={generate} disabled={loading}>
+        {loading ? '⏳ GENERANDO...' : '⚡ GENERA IL MIO PIANO'}
+      </button>
+
+      {loading && (
+        <div className="ai-load">
+          <Spinner size={52}/>
+          <div className="ai-load-t">L'AI STA FORGIANDO IL TUO PIANO...</div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ─── PROFILE ─── */
+const Profile = ({ profile, progress, isPremium, notifications, onNotifs, onTogglePremium }) => {
+  const ri   = getRankIndex(progress.xp);
+  const rank = RANKS[ri];
+  const bmi  = (profile.weight/((profile.height/100)**2)).toFixed(1);
+  const bmiCat = bmi<18.5?'Sottopeso':bmi<25?'Normopeso':bmi<30?'Sovrappeso':'Obesità';
+  const [editTime, setEditTime] = useState(false);
+  const [tmpTime, setTmpTime]   = useState(notifications.time||'08:00');
+
+  const reqNotif = async () => {
+    if (!('Notification' in window)) { alert('Notifiche non supportate da questo browser.'); return; }
+    const p = await Notification.requestPermission();
+    if (p === 'granted') onNotifs({...notifications, enabled:true});
+    else alert('Permesso negato. Abilita le notifiche nelle impostazioni del browser.');
+  };
+
+  const toggleDay = d => {
+    const days = [...(notifications.days||[])];
+    const i = days.indexOf(d);
+    if (i>=0) days.splice(i,1); else days.push(d);
+    onNotifs({...notifications, days});
+  };
+
+  return (
+    <div className="prof-wrap scroll">
+      <div className="prof-avatar">
+        <div className={`avatar-ring${isPremium?' gold':''}`} style={isPremium?{}:{borderColor:rank.color,boxShadow:`0 0 22px ${rank.color}44`}}>
+          {profile.name[0].toUpperCase()}
+        </div>
+        <div className="prof-name">{profile.name.toUpperCase()}</div>
+        {profile.email && <div className="prof-email">{profile.email}</div>}
+        {isPremium && <div className="premium-badge">💎 PREMIUM</div>}
+      </div>
+
+      {!isPremium && (
+        <div className="prem-banner">
+          <div className="prem-icon">💎</div>
+          <div>
+            <div className="prem-title">PASSA A PREMIUM</div>
+            <div className="prem-sub">Piano AI · Nessuna pubblicità · Sync cloud</div>
+          </div>
+          <button className="prem-btn" onClick={onTogglePremium}>ATTIVA</button>
+        </div>
+      )}
+
+      <div className="sett-section">
+        <div className="label-caps sett-head">Profilo fisico</div>
+        <div className="sett-card">
+          {[
+            ['📏 Altezza', `${profile.height} cm`],
+            ['⚖️ Peso',    `${profile.weight} kg`],
+            ['📊 BMI',     `${bmi} — ${bmiCat}`],
+            ['🎯 Obiettivo', profile.goal],
+            ['💪 Livello',   profile.experience],
+            ['📅 Giorni/sett.', `${profile.days} giorni`],
+          ].map(([l,v])=>(
+            <div key={l} className="sett-row" style={{cursor:'default'}}>
+              <span className="sett-lbl">{l}</span>
+              <span className="sett-val">{v}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="sett-section">
+        <div className="label-caps sett-head">🔔 Notifiche allenamento</div>
+        <div className="sett-card">
+          <div className="sett-row">
+            <span className="sett-lbl">Promemoria attivo</span>
+            <div className={`tog${notifications.enabled?' on':''}`}
+              onClick={()=>notifications.enabled?onNotifs({...notifications,enabled:false}):reqNotif()}>
+              <div className="tog-dot"/>
+            </div>
+          </div>
+          {notifications.enabled && <>
+            <div style={{padding:'12px 16px',borderBottom:'1px solid var(--border)'}}>
+              <div className="label-caps" style={{marginBottom:10}}>Giorni di allenamento</div>
+              <div className="days-row">
+                {DAYS_SHORT.map((d,i)=>(
+                  <div key={i} className={`day-chip${(notifications.days||[]).includes(i)?' on':''}`}
+                    onClick={()=>toggleDay(i)}>{d}</div>
+                ))}
+              </div>
+            </div>
+            <div className="sett-row" onClick={()=>setEditTime(!editTime)} style={{cursor:'pointer'}}>
+              <span className="sett-lbl">Orario</span>
+              {editTime ? (
+                <div style={{display:'flex',gap:8,alignItems:'center'}} onClick={e=>e.stopPropagation()}>
+                  <input type="time" value={tmpTime} onChange={e=>setTmpTime(e.target.value)} className="fi"
+                    style={{width:'auto',padding:'4px 8px',fontSize:14}}/>
+                  <button onClick={()=>{onNotifs({...notifications,time:tmpTime});setEditTime(false);}}
+                    style={{background:'var(--accent)',border:'none',borderRadius:8,padding:'4px 12px',
+                    color:'#fff',fontWeight:700,fontSize:13,cursor:'pointer'}}>OK</button>
+                </div>
+              ) : <span className="sett-val">{notifications.time||'08:00'}</span>}
+            </div>
+          </>}
+        </div>
+      </div>
+
+      <div className="sett-section">
+        <div className="label-caps sett-head">🏆 Record personali</div>
+        <div className="sett-card">
+          {[
+            ['🏋️ Panca',  profile.bench],
+            ['🦵 Squat',  profile.squat],
+            ['⬆️ Stacco', profile.deadlift],
+          ].map(([l,v])=>(
+            <div key={l} className="sett-row" style={{cursor:'default'}}>
+              <span className="sett-lbl">{l}</span>
+              <span className="sett-val">{v||'—'}{v?' kg':''}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="sett-section">
+        <div className="label-caps sett-head">🎖️ Rank system</div>
+        <div className="sett-card" style={{padding:'14px 16px'}}>
+          <div style={{color:'var(--text-2)',fontSize:13,marginBottom:12}}>
+            {RANKS.length} rank totali — sei al rank {ri+1} su {RANKS.length}
+          </div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+            {RANKS.map((r,i)=>(
+              <div key={i} style={{
+                padding:'3px 10px', borderRadius:50,
+                background: i<=ri?`${r.color}22`:'transparent',
+                border:`1px solid ${i<=ri?r.color:'var(--border)'}`,
+                fontSize:11, color:i<=ri?r.color:'var(--muted)',
+                fontWeight:600,
+              }}>{r.icon} {r.name}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{height:24}}/>
+    </div>
+  );
+};
+
+/* ─── RANK UNLOCK ─── */
+const RankUnlock = ({ rank, onClose }) => (
+  <div className="unlock-overlay" onClick={onClose}>
+    <div className="unlock-card" onClick={e=>e.stopPropagation()}>
+      <span className="unlock-big">{rank.icon}</span>
+      <div className="unlock-sup">NUOVO RANK SBLOCCATO</div>
+      <div className="unlock-name" style={{color:rank.color}}>{rank.name.toUpperCase()}</div>
+      <div className="unlock-sub">Continua a forgiarti — sei sulla strada giusta!</div>
+      <button className="btn btn-fire" onClick={onClose}>AVANTI 💪</button>
+    </div>
+  </div>
+);
+
+/* ─── APP ROOT ─── */
+const App = () => {
+  const [screen,  setScreen]  = useState('splash');
+  const [profile, setProfile] = useState(null);
+  const [progress,setProgress]= useState({xp:0,streak:0,workouts:0,lastWorkout:null});
+  const [plan,    setPlan]    = useState(null);
+  const [premium, setPremium] = useState(false);
+  const [notifs,  setNotifs]  = useState({enabled:false,days:[],time:'08:00'});
+  const [tab,     setTab]     = useState('home');
+  const [unlock,  setUnlock]  = useState(null);
+  const [xpPop,   setXPPop]   = useState(null);
+
+  /* boot */
+  useEffect(()=>{
+    const t = setTimeout(()=>{
+      const p = ls.get('forge_profile');
+      if (p) {
+        setProfile(p);
+        setProgress(ls.get('forge_progress')||{xp:0,streak:0,workouts:0,lastWorkout:null});
+        setPlan(ls.get('forge_plan')||DEFAULT_PLAN);
+        setPremium(ls.get('forge_premium')||false);
+        setNotifs(ls.get('forge_notifs')||{enabled:false,days:[],time:'08:00'});
+        setScreen('main');
+      } else setScreen('onboarding');
+    }, 2800);
+    return ()=>clearTimeout(t);
+  },[]);
+
+  /* notification scheduler */
+  useEffect(()=>{
+    if (!notifs.enabled || !('Notification' in window) || !profile) return;
+    const [h,m] = (notifs.time||'08:00').split(':').map(Number);
+    const days = notifs.days||[];
+    if (!days.length) return;
+    const now = new Date();
+    let cleanup;
+    for (let off=0; off<8; off++) {
+      const d = new Date(now); d.setDate(d.getDate()+off);
+      const wi = d.getDay()===0?6:d.getDay()-1;
+      if (!days.includes(wi)) continue;
+      const sched = new Date(d); sched.setHours(h,m,0,0);
+      if (sched > now) {
+        const tid = setTimeout(()=>{
+          new Notification('FORGE 💪',{body:`Ora di allenarti, ${profile.name}! Vai a forgiarti 🔥`});
+        }, sched-now);
+        cleanup = ()=>clearTimeout(tid);
+        break;
+      }
+    }
+    return cleanup;
+  },[notifs,profile]);
+
+  /* onboarding done */
+  const handleOnboard = useCallback(f=>{
+    const p = {
+      name:f.name, age:+f.age, sex:f.sex,
+      weight:+f.weight, height:+f.height,
+      goal:f.goal, experience:f.experience, days:f.days,
+      bench:f.bench, squat:f.squat, deadlift:f.deadlift,
+      email:f.email, apiKey:f.apiKey,
+    };
+    ls.set('forge_profile',p);
+    ls.set('forge_progress',{xp:0,streak:0,workouts:0,lastWorkout:null});
+    ls.set('forge_plan',DEFAULT_PLAN);
+    ls.set('forge_premium',f.premium);
+    setProfile(p);
+    setProgress({xp:0,streak:0,workouts:0,lastWorkout:null});
+    setPlan(DEFAULT_PLAN);
+    setPremium(f.premium);
+    setScreen('main');
+  },[]);
+
+  /* add XP */
+  const addXP = useCallback(amount=>{
+    setProgress(prev=>{
+      const oldRi = getRankIdx(prev.xp);
+      const newXP = prev.xp + amount;
+      const newRi = getRankIdx(newXP);
+      const today = new Date().toDateString();
+      const lastDay = prev.lastWorkout ? new Date(prev.lastWorkout).toDateString() : null;
+      const newStreak = lastDay===today ? prev.streak : prev.streak+1;
+      const next = {
+        ...prev, xp:newXP, streak:newStreak,
+        workouts:(prev.workouts||0)+1,
+        lastWorkout:new Date().toISOString(),
+      };
+      ls.set('forge_progress',next);
+      if (newRi > oldRi) setTimeout(()=>setUnlock(RANKS[newRi]),400);
+      return next;
+    });
+    setXPPop(amount);
+    setTimeout(()=>setXPPop(null),2300);
+  },[]);
+
+  /* plan generated by AI */
+  const handlePlanReady = useCallback(p=>{
+    setPlan(p);
+    ls.set('forge_plan',p);
+    setTab('plan');
+  },[]);
+
+  /* update notifs */
+  const handleNotifs = useCallback(n=>{
+    setNotifs(n);
+    ls.set('forge_notifs',n);
+  },[]);
+
+  /* toggle premium */
+  const handlePremium = useCallback(()=>{
+    const k = window.prompt('Inserisci la tua chiave API Anthropic (sk-ant-...) per attivare Premium:');
+    if (!k) return;
+    if (!k.startsWith('sk-')) { alert('Chiave non valida. Deve iniziare con sk-ant-...'); return; }
+    const updated = {...profile, apiKey:k};
+    setProfile(updated);
+    ls.set('forge_profile',updated);
+    setPremium(true);
+    ls.set('forge_premium',true);
+    alert('💎 Premium attivato! Ora puoi generare piani AI da "Piano AI".');
+  },[profile]);
+
+  /* screens */
+  if (screen==='splash')      return <Splash/>;
+  if (screen==='onboarding')  return <Onboarding onDone={handleOnboard}/>;
+
+  const TABS = [
+    {id:'home',    lbl:'Home',   icon:'🏠'},
+    {id:'plan',    lbl:'Piano',  icon:'📋'},
+    {id:'ai',      lbl:'Piano AI',icon:'🤖'},
+    {id:'profile', lbl:'Profilo',icon:'👤'},
+  ];
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',height:'100dvh'}}>
+      {xpPop && <div className="xp-pop">+{xpPop} XP ⚡</div>}
+      {unlock && <RankUnlock rank={unlock} onClose={()=>setUnlock(null)}/>}
+
+      {/* main content */}
+      <div style={{flex:1,overflow:'hidden',display:'flex',flexDirection:'column'}}>
+        {tab==='home'    && <Home    profile={profile} progress={progress} plan={plan} isPremium={premium} onAddXP={addXP}/>}
+        {tab==='plan'    && <Plan    plan={plan}/>}
+        {tab==='ai'      && <AIScreen profile={profile} isPremium={premium} apiKey={profile?.apiKey} onPlanReady={handlePlanReady} onTabChange={setTab}/>}
+        {tab==='profile' && <Profile  profile={profile} progress={progress} isPremium={premium} notifications={notifs} onNotifs={handleNotifs} onTogglePremium={handlePremium}/>}
+      </div>
+
+      {/* bottom nav */}
+      <div className="nav">
+        {TABS.map(t=>(
+          <div key={t.id} className={`nav-tab${tab===t.id?' on':''}`} onClick={()=>setTab(t.id)}>
+            <span className="nav-icon">{t.icon}</span>
+            <span className="nav-lbl">{t.lbl}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+
+  </script>
+</body>
+</html>
